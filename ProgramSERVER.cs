@@ -126,6 +126,12 @@ public static class ServerManager
 
     public static void SetUp(Config config)
     {
+        tcpSocket = null;
+        udpSocket = null;
+        while(true)
+            if(tcpSocket != null && udpSocket != null)
+                break;
+        
         Initialize(config.clientUDPPort, config.clientTCPPort);
         DriveTransmition.SetSockets(tcpSocket, udpSocket);
         
