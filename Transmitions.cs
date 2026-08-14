@@ -161,6 +161,8 @@ public static class DriveTransmition
             }
         }
 
+        socketTCP.Listen();
+        
         connectionTCPSocket = await socketTCP.AcceptAsync();
     }
 
