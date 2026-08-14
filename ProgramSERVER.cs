@@ -15,10 +15,11 @@ public static class ConsoleManager {
     "Open UDP Port (server)", 
     "Open TCP Port (server)", 
     "Server IP Address", 
-    "Server bandwidth", 
+    "Server bandwidth [NA for non-applicable]", 
     "Greeting (to client) [NA for non-applicable]",
     "Greeting (to server) [NA for non-applicable]"];
     private static string repository;
+    
     public static async Task Main()
     {
         while(running)
