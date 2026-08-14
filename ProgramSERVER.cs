@@ -49,7 +49,7 @@ public static class ConsoleManager {
                 rules = ReadUserRes(9, configStrings);
                 Config config = new Config();
                 config.SetUp(rules);
-                DriveManager.SetUp(config);
+                ServerManager.SetUp(config);
                 break;
             case "connects":
                 await ServerManager.Connect(false); 
