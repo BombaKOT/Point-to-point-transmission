@@ -98,8 +98,8 @@ public static class ServerManager
     public static IPEndPoint[] EndPoints(int clientUDPPort, int clientTCPPort, string ip = null)
     {
         //Returns  EPs for future usage 
-        IPEndPoint serverUDP = new IPEndPoint(IPAddress.Parse(ip != null ? ip : SelfIpAddress()), clientUDPPort);
-        IPEndPoint serverTCP = new IPEndPoint(IPAddress.Parse(ip != null ? ip : SelfIpAddress()), clientTCPPort);
+        IPEndPoint serverUDP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientUDPPort);
+        IPEndPoint serverTCP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientTCPPort);
         IPEndPoint[] vals = new IPEndPoint[2];
         vals[0] = serverUDP;
         vals[1] = serverTCP;
@@ -122,8 +122,12 @@ public static class ServerManager
 
     private static string SelfIpAddress()
     {
-        string hostName = Dns.GetHostName();
-        return Dns.GetHostByName(hostName).AddressList[0].ToString();
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList.Where(a => a.AddressFamily == AddressFamily.InterNetwork))
+            return ip;
+        
+        Console.Write("\nCould not identify host machine IP address, please enter it manually: ");
+        return IPAddress.Parse(Console.ReadLine());
     }
 
     public static void SetUp(Config config)
