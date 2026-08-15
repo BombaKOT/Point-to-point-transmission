@@ -1,4 +1,4 @@
-﻿using System.Net.Sockets;
+using System.Net.Sockets;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -15,11 +15,10 @@ public static class ConsoleManager {
     "Open UDP Port (server)", 
     "Open TCP Port (server)", 
     "Server IP Address", 
-    "Server bandwidth [NA for non-applicable]", 
+    "Server bandwidth", 
     "Greeting (to client) [NA for non-applicable]",
     "Greeting (to server) [NA for non-applicable]"];
     private static string repository;
-    
     public static async Task Main()
     {
         while(running)
@@ -95,7 +94,7 @@ public static class ServerManager
     private static Socket tcpSocket;
     private static Socket udpSocket;
 
-    public static IPEndPoint[] EndPoints(int clientUDPPort, int clientTCPPort, string ip = null)
+    public static IPEndPoint[] EndPoints(int clientUDPPort, int clientTCPPort, IPAddress ip = null)
     {
         //Returns  EPs for future usage 
         IPEndPoint serverUDP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientUDPPort);
@@ -120,12 +119,12 @@ public static class ServerManager
         udpSocket.Bind(clientUDPEP);
     }
 
-    private static string SelfIpAddress()
+    private static IPAddress SelfIpAddress()
     {
         var host = Dns.GetHostEntry(Dns.GetHostName());
         foreach (var ip in host.AddressList.Where(a => a.AddressFamily == AddressFamily.InterNetwork))
             return ip;
-        
+
         Console.Write("\nCould not identify host machine IP address, please enter it manually: ");
         return IPAddress.Parse(Console.ReadLine());
     }
@@ -142,7 +141,7 @@ public static class ServerManager
 
         DriveTransmition.SetSockets(tcpSocket, udpSocket);
         
-        IPEndPoint[] serverEPS = EndPoints(config.serverUDPPort, config.serverTCPPort, config.serverIP);
+        IPEndPoint[] serverEPS = EndPoints(config.serverUDPPort, config.serverTCPPort, IPAddress.Parse(config.serverIP));
         DriveTransmition.SetEP(serverEPS[0], serverEPS[1]);
         
         DriveTransmition.SetInfo(config.key2Server, config.key2Client, config.bandwidthClient, config.bandwidthServer);
@@ -217,14 +216,14 @@ public class Config
     public string key2Client;
     public void SetUp(string[] rules)
     {
-        Int32.TryParse(rules[0], out clientUDPPort);
-        Int32.TryParse(rules[1], out clientTCPPort);
-        Int32.TryParse(rules[2], out bandwidthClient);
-        Int32.TryParse(rules[3], out serverUDPPort);
-        Int32.TryParse(rules[4], out serverTCPPort);
+        int.TryParse(rules[0], out clientUDPPort);
+        int.TryParse(rules[1], out clientTCPPort);
+        int.TryParse(rules[2], out bandwidthClient);
+        int.TryParse(rules[3], out serverUDPPort);
+        int.TryParse(rules[4], out serverTCPPort);
         serverIP = rules[5];
         if(rules[6] != "NA")
-            Int32.TryParse(rules[6], out bandwidthServer);
+            int.TryParse(rules[6], out bandwidthServer);
         else 
             bandwidthServer = 0;
         key2Client = rules[7] != "NA" ? rules[7] : null;
