@@ -130,6 +130,7 @@ public static class ServerManager
                 {
                     if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                     {
+                        Console.Write($"\nAUTO IP DISCOVER: {ip.Address}\n");
                         return ip.Address;
                     }
                 }
