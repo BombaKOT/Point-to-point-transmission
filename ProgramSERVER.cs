@@ -121,9 +121,20 @@ public static class ServerManager
 
     private static IPAddress SelfIpAddress()
     {
-        var host = Dns.GetHostEntry(Dns.GetHostName());
-        foreach (var ip in host.AddressList.Where(a => a.AddressFamily == AddressFamily.InterNetwork))
-            return ip;
+        //THIS STILL FUCKS
+        foreach(NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if(ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+            {
+                foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                {
+                    if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        return ip.Address;
+                    }
+                }
+            }  
+        }
 
         Console.Write("\nCould not identify host machine IP address, please enter it manually: ");
         return IPAddress.Parse(Console.ReadLine());
