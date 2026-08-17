@@ -15,7 +15,7 @@ public static class ConsoleManager {
     "Open UDP Port (server)", 
     "Open TCP Port (server)", 
     "Server IP Address", 
-    "Server bandwidth", 
+    "Bandwidth (server) [NA for non-applicable]", 
     "Greeting (to client) [NA for non-applicable]",
     "Greeting (to server) [NA for non-applicable]"];
     private static string repository;
@@ -82,7 +82,19 @@ public static class ConsoleManager {
                 */
                 repository = ReadUserRes(1, ["Repository of your files"])[0];
                 break;
+            case "connectstatus":
+                DriveTransmition.ConnectionStatus();
+                break;
+            case "listconfig":
+                ListConfig();
+                break;
         }
+    }
+
+    private static void ListConfig()
+    {
+        for(int i = 0; i < rules.Length; i++)
+            Console.Write($"\n{configStrings[i]}: {rules[i]}");
     }
 
 }
@@ -211,6 +223,15 @@ public static class ServerManager
     public static async Task StandbyServer(string repo)
     {
         
+    }
+
+    public static void ConnectionStatus()
+    {
+        Console.Write("\nFetching info\n");
+        foreach(string info in DriveTransmition.ConnectionStatus())
+        {
+            Console.Write("\n" + info);
+        }
     }
 }
 
