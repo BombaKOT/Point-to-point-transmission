@@ -208,4 +208,25 @@ public static class DriveTransmition
         Console.Write($"Finished building {path}");
     }
 
+    public static string[] ConnectionStatus()
+    {
+        List<string> info = new List<string>();
+        info.Add($"IP Address {(socketTCP.LocalEndPoint as IPEndPoint).Address}");
+        info.Add($"TCP Socket port: {(socketTCP.LocalEndPoint as IPEndPoint).Port}");
+        info.Add($"UDP Socket port: {(socketUDP.LocalEndPoint as IPEndPoint).Port}");
+        if (connectionTCPSocket.Connected)
+        {
+            info.Add("SOCKET STATUS: Connected");
+            info.Add($"SOCKET DES IP: {(connectionTCPSocket.RemoteEndPoint as IPEndPoint).Address}");
+            info.Add($"SOCKET READ MODE: {connectionTCPSocket.Poll(100, SelectMode.SelectRead)}");
+            info.Add($"SOCKET READ MODE: {connectionTCPSocket.Poll(100, SelectMode.SelectRead)}");
+            info.Add($"SOCKET WRITE MODE: {connectionTCPSocket.Poll(100, SelectMode.SelectWrite)}");
+            info.Add($"SOCKET ERRORS: {connectionTCPSocket.Poll(100, SelectMode.SelectError)}");
+        } else
+        {
+            info.Add("SOCKET STATUS: Disconnected");
+        }
+
+        return info.ToArray();
+    }
 }
