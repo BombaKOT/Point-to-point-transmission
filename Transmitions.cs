@@ -129,15 +129,12 @@ public static class DriveTransmition
 
     public async static Task Disconnect()
     {
-        if(!connectionTCPSocket.Connected && connectionTCPSocket.Poll(100, SelectMode.SelectWrite)) return;
+        if(!connectionTCPSocket.Connected && !connectionTCPSocket.Poll(100, SelectMode.SelectWrite)) return;
         
         if (server)
-        {
             connectionTCPSocket.Close();
-        } else
-        {
+         else
             await connectionTCPSocket.DisconnectAsync(true);
-        }
     }
 
     public async static Task ClientConnect()
