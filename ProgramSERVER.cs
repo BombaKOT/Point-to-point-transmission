@@ -23,8 +23,6 @@ public static class ConsoleManager {
     {
         while(running)
         {
-            for(int i = 0; i < rules.Length; i++)
-                Console.Write($"\n{configStrings[i]}: {rules[i]}");
             request = ReadUserRes(1, ["Query"])[0];
             await Decission(request);
         }
