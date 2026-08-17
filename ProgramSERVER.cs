@@ -83,7 +83,7 @@ public static class ConsoleManager {
                 repository = ReadUserRes(1, ["Repository of your files"])[0];
                 break;
             case "connectstatus":
-                DriveTransmition.ConnectionStatus();
+                ServerManager.ConnectionStatus();
                 break;
             case "listconfig":
                 ListConfig();
