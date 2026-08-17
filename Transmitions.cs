@@ -21,6 +21,7 @@ public static class DriveTransmition
     private static string binPath = "bin.bin";
     private static string lastName;
     private static string lastExtension;
+    private static bool server;
 
     //CONFIG
     public static void SetSockets(Socket tcpSocketNew, Socket udpSocketNew)
@@ -128,15 +129,22 @@ public static class DriveTransmition
 
     public async static Task Disconnect()
     {
-        await connectionTCPSocket.DisconnectAsync(true);
-        connectionTCPSocket.Close();
-        connectionTCPSocket = null;
+        await connectionTCPSocket.DisconnectAsync(!server);
+        
+        if (server)
+        {
+            connectionTCPSocket.Close();
+            connectionTCPSocket = null;
+        }
+
         if(socketTCP.Connected)
             await socketTCP.DisconnectAsync(true);
     }
 
     public async static Task ClientConnect()
     {
+        server = false;
+
         if(serverGreeting != null)
         {
             byte[] greeting = Encoding.ASCII.GetBytes(serverGreeting);
@@ -152,6 +160,8 @@ public static class DriveTransmition
 
     public async static Task ServerConnect()
     {
+        server = true;
+        
         if (selfPasskey != null)
         {
             bool passed = false;
