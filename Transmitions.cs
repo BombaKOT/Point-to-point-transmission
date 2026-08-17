@@ -4,6 +4,9 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
+//METHOD FILE SEND/RECIEVE/DISCONNECT: FIX CONNECTION SOCKET ONLY FOR THE SERVER, MAKE A 3RD PARTY VARIABLE THAT USES THE CORRECT SOCKET
+//LIKE BANDWIDTH
+//ALSO CLEAR BIN
 public static class DriveTransmition
 {
     private static Socket connectionTCPSocket;
@@ -113,7 +116,7 @@ public static class DriveTransmition
                 buffer = new byte[width];
                 mem = new Memory<byte>(buffer);
 
-                length = await socketTCP.ReceiveAsync(mem);
+                length = await connectionTCPSocket.ReceiveAsync(mem);
                 currentLength += length;
                 await stream.WriteAsync(buffer, 0, length);
             }
@@ -125,13 +128,11 @@ public static class DriveTransmition
 
     public async static Task Disconnect()
     {
-        if(connectionTCPSocket != null)
-        {
-            connectionTCPSocket.Close();
-            connectionTCPSocket = null;
-            return;
-        } 
-        await socketTCP.DisconnectAsync(true);
+        await connectionTCPSocket.DisconnectAsync(true);
+        connectionTCPSocket.Close();
+        connectionTCPSocket = null;
+        if(socketTCP.Connected)
+            await socketTCP.DisconnectAsync(true);
     }
 
     public async static Task ClientConnect()
@@ -141,8 +142,12 @@ public static class DriveTransmition
             byte[] greeting = Encoding.ASCII.GetBytes(serverGreeting);
             await socketUDP.SendToAsync(greeting, udpEP);
         }
-
+        
+        Console.Write($"\nAttemping to establish connection to {tcpEP.Address} on port {tcpEP.Port}");
+        
         await socketTCP.ConnectAsync(tcpEP);
+        
+        connectionTCPSocket = socketTCP;
     }
 
     public async static Task ServerConnect()
@@ -162,7 +167,7 @@ public static class DriveTransmition
         }
 
         socketTCP.Listen();
-        
+
         connectionTCPSocket = await socketTCP.AcceptAsync();
     }
 
@@ -188,6 +193,8 @@ public static class DriveTransmition
         Console.Write($"Building {path}");
 
         File.Copy(binPath, path);
+        
+        File.WriteAllText(binPath, "");
 
         Console.Write($"Finished building {path}");
     }
