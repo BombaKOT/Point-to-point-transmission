@@ -4,7 +4,9 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
+
 await ConsoleManager.Main();
+
 public static class ConsoleManager {
     private static bool running = true;
     private static string request;
@@ -18,7 +20,7 @@ public static class ConsoleManager {
     "Bandwidth (server) [NA for non-applicable]", 
     "Greeting (to client) [NA for non-applicable]",
     "Greeting (to server) [NA for non-applicable]"];
-    private static string repository;
+    
     public static async Task Main()
     {
         while(running)
@@ -66,35 +68,21 @@ public static class ConsoleManager {
                 break;
             case "close":
                 Console.Write("\nClosing app");
+                await ServerManager.Disconnect();
                 running = false;
                 break;
             case "recreate":
                 await ServerManager.Recreate(ReadUserRes(1, ["Name for recreation [NA for non-applicable]"])[0]);
                 break;
-            case "standby":
-                /*
-                    TODO:
-                        RENAME previous server names to listening device 
-                        Config lite - No dest EPs, ask if completely public or restricted to a couple of IP addresses, repo directory
-                        Create functions: RequestServerFile, UploadServerFile, StandbyConnect, StandbyDisconnect/Stop
-                */
-                repository = ReadUserRes(1, ["Repository of your files"])[0];
-                break;
             case "connectstatus":
                 ServerManager.ConnectionStatus();
                 break;
             case "listconfig":
-                ListConfig();
+                for(int i = 0; i < rules.Length; i++)
+                    Console.Write($"\n{configStrings[i]}: {rules[i]}");
                 break;
         }
     }
-
-    private static void ListConfig()
-    {
-        for(int i = 0; i < rules.Length; i++)
-            Console.Write($"\n{configStrings[i]}: {rules[i]}");
-    }
-
 }
 
 
@@ -106,7 +94,6 @@ public static class ServerManager
 
     public static IPEndPoint[] EndPoints(int clientUDPPort, int clientTCPPort, IPAddress ip = null)
     {
-        //Returns  EPs for future usage 
         IPEndPoint serverUDP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientUDPPort);
         IPEndPoint serverTCP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientTCPPort);
         IPEndPoint[] vals = new IPEndPoint[2];
@@ -117,7 +104,6 @@ public static class ServerManager
 
     private static void Initialize(int udpPort, int tcpPort)
     {
-        //Creates the sockets and binds them to client EPs
         IPEndPoint[] clientEPS = EndPoints(udpPort, tcpPort);
 
         tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -131,21 +117,14 @@ public static class ServerManager
 
     private static IPAddress SelfIpAddress()
     {
-        //THIS STILL FUCKS
         foreach(NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-        {
             if(ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
-            {
                 foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
-                {
                     if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                     {
                         Console.Write($"\nAUTO IP DISCOVER: {ip.Address}\n");
                         return ip.Address;
                     }
-                }
-            }  
-        }
 
         Console.Write("\nCould not identify host machine IP address, please enter it manually: ");
         return IPAddress.Parse(Console.ReadLine());
@@ -216,11 +195,6 @@ public static class ServerManager
         Console.Write($"\nRecreating last recieved file");
         DriveTransmition.CreateFile(name);
         Console.Write($"\nFinished recreating last recieved file");
-    }
-
-    public static async Task StandbyServer(string repo)
-    {
-        
     }
 
     public static void ConnectionStatus()
