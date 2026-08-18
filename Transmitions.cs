@@ -4,9 +4,7 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-//METHOD FILE SEND/RECIEVE/DISCONNECT: FIX CONNECTION SOCKET ONLY FOR THE SERVER, MAKE A 3RD PARTY VARIABLE THAT USES THE CORRECT SOCKET
-//LIKE BANDWIDTH
-//ALSO CLEAR BIN
+
 public static class DriveTransmition
 {
     private static Socket connectionTCPSocket;
@@ -82,6 +80,8 @@ public static class DriveTransmition
 
             await connectionTCPSocket.SendAsync(tempArray);
         }
+
+        if(leftOver <= 0) return;
 
         tempArray = new byte[leftOver];
 
