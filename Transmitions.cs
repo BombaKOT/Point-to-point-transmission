@@ -109,6 +109,8 @@ public static class DriveTransmition
 
         if(!Path.Exists(binPath))
             File.Create(binPath).Close();
+        else 
+            File.WriteAllText(binPath, "");
 
         using(var stream = new FileStream(binPath, FileMode.Append, FileAccess.Write, FileShare.None, 16384, useAsync: true))
         {
@@ -199,8 +201,6 @@ public static class DriveTransmition
         Console.Write($"Building {path}");
 
         File.Copy(binPath, path);
-        
-        File.WriteAllText(binPath, "");
 
         Console.Write($"Finished building {path}");
     }
