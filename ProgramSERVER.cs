@@ -207,7 +207,7 @@ public static class ServerManager
     public static async Task Disconnect()
     {
         Console.Write("\nBeginning process of disconnection");
-        await DriveTransmition.ServerConnect();
+        await DriveTransmition.Disconnect();
         Console.Write("\nConnected to client, ready to send or recieve files");
     }
 
