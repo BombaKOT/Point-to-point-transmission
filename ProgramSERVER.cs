@@ -227,10 +227,7 @@ public class Config
         int.TryParse(rules[3], out serverUDPPort);
         int.TryParse(rules[4], out serverTCPPort);
         serverIP = rules[5];
-        if(rules[6] != "NA")
-            int.TryParse(rules[6], out bandwidthServer);
-        else 
-            bandwidthServer = 0;
+        rule[6] != "NA" ? int.TryParse(rules[6], out bandwidthServer) : 0;
         key2Client = rules[7] != "NA" ? rules[7] : null;
         key2Server = rules[8] != "NA" ? rules[8] : null;
     }
