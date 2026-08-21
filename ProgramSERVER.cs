@@ -81,6 +81,9 @@ public static class ConsoleManager {
                 for(int i = 0; i < rules.Length; i++)
                     Console.Write($"\n{configStrings[i]}: {rules[i]}");
                 break;
+            case "clear":
+                Console.Clear();
+                break;
         }
     }
 }
