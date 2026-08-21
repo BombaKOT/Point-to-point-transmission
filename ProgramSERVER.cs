@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿using System.Net.Sockets;
+=======
+using System.Net.Sockets;
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -6,6 +10,10 @@ using System.IO;
 using System.Threading.Tasks;
 
 await ConsoleManager.Main();
+<<<<<<< HEAD
+=======
+
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
 public static class ConsoleManager {
     private static bool running = true;
     private static string request;
@@ -19,7 +27,11 @@ public static class ConsoleManager {
     "Bandwidth (server) [NA for non-applicable]", 
     "Greeting (to client) [NA for non-applicable]",
     "Greeting (to server) [NA for non-applicable]"];
+<<<<<<< HEAD
     private static string repository;
+=======
+    
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
     public static async Task Main()
     {
         while(running)
@@ -29,6 +41,19 @@ public static class ConsoleManager {
         }
     }
 
+<<<<<<< HEAD
+=======
+    private static string[] ReadUserRes(int times, string[] messages)
+    {
+        string[] res = new string[times];
+        for(int i = 0; i < times; i++)
+        {
+            Console.Write($"\n{messages[i]}: ");
+            res[i] = Console.ReadLine().Trim();
+        }
+        return res;
+    }
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
 
     private static async Task Decission(string query)
     {
@@ -57,11 +82,16 @@ public static class ConsoleManager {
                 break;
             case "close":
                 Console.Write("\nClosing app");
+<<<<<<< HEAD
+=======
+                await ServerManager.Disconnect();
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
                 running = false;
                 break;
             case "recreate":
                 await ServerManager.Recreate(ReadUserRes(1, ["Name for recreation [NA for non-applicable]"])[0]);
                 break;
+<<<<<<< HEAD
             case "standby":
                 /*
                     TODO:
@@ -96,6 +126,20 @@ public static class ConsoleManager {
             Console.Write($"\n{configStrings[i]}: {rules[i]}");
     }
 
+=======
+            case "connectstatus":
+                ServerManager.ConnectionStatus();
+                break;
+            case "listconfig":
+                for(int i = 0; i < rules.Length; i++)
+                    Console.Write($"\n{configStrings[i]}: {rules[i]}");
+                break;
+            case "clear":
+                Console.Clear();
+                break;
+        }
+    }
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
 }
 
 
@@ -107,7 +151,10 @@ public static class ServerManager
 
     public static IPEndPoint[] EndPoints(int clientUDPPort, int clientTCPPort, IPAddress ip = null)
     {
+<<<<<<< HEAD
         //Returns  EPs for future usage 
+=======
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
         IPEndPoint serverUDP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientUDPPort);
         IPEndPoint serverTCP = new IPEndPoint(ip != null ? ip : SelfIpAddress(), clientTCPPort);
         IPEndPoint[] vals = new IPEndPoint[2];
@@ -118,7 +165,10 @@ public static class ServerManager
 
     private static void Initialize(int udpPort, int tcpPort)
     {
+<<<<<<< HEAD
         //Creates the sockets and binds them to client EPs
+=======
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
         IPEndPoint[] clientEPS = EndPoints(udpPort, tcpPort);
 
         tcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -132,6 +182,7 @@ public static class ServerManager
 
     private static IPAddress SelfIpAddress()
     {
+<<<<<<< HEAD
         //THIS STILL FUCKS
         foreach(NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
         {
@@ -139,14 +190,22 @@ public static class ServerManager
             {
                 foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
                 {
+=======
+        foreach(NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+            if(ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+                foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
                     if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                     {
                         Console.Write($"\nAUTO IP DISCOVER: {ip.Address}\n");
                         return ip.Address;
                     }
+<<<<<<< HEAD
                 }
             }  
         }
+=======
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
 
         Console.Write("\nCould not identify host machine IP address, please enter it manually: ");
         return IPAddress.Parse(Console.ReadLine());
@@ -219,11 +278,14 @@ public static class ServerManager
         Console.Write($"\nFinished recreating last recieved file");
     }
 
+<<<<<<< HEAD
     public static async Task StandbyServer(string repo)
     {
         
     }
 
+=======
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
     public static void ConnectionStatus()
     {
         Console.Write("\nFetching info\n");
@@ -254,6 +316,7 @@ public class Config
         int.TryParse(rules[3], out serverUDPPort);
         int.TryParse(rules[4], out serverTCPPort);
         serverIP = rules[5];
+<<<<<<< HEAD
         if(rules[6] != "NA")
             int.TryParse(rules[6], out bandwidthServer);
         else 
@@ -262,3 +325,10 @@ public class Config
         key2Server = rules[8] != "NA" ? rules[8] : null;
     }
 }
+=======
+        rule[6] != "NA" ? int.TryParse(rules[6], out bandwidthServer) : 0;
+        key2Client = rules[7] != "NA" ? rules[7] : null;
+        key2Server = rules[8] != "NA" ? rules[8] : null;
+    }
+}
+>>>>>>> 34ae1048d27ea2a4e7ba8a287b6abac14acdeb14
