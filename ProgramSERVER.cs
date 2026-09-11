@@ -48,13 +48,13 @@ public static class ConsoleManager {
                 rules = ReadUserRes(9, configStrings);
                 Config config = new Config();
                 config.SetUp(rules);
-                ServerManager.SetUp(config);
+                ServerManager.SetUp(config, false);
                 break;
-            case "connects":
-                await ServerManager.Connect(false); 
+            case "connect-server":
+                await ServerManager.Connect(false, false); 
                 break;
-            case "connectc": 
-                await ServerManager.Connect(true); 
+            case "connect-client": 
+                await ServerManager.Connect(true, false); 
                 break;
             case "send": 
                 await ServerManager.SendTo(ReadUserRes(1, ["Filename"])[0]);
@@ -82,6 +82,21 @@ public static class ConsoleManager {
                 break;
             case "clear":
                 Console.Clear();
+                break;
+            case "config-standby-server":
+                rules = ReadUserRes(9, configStrings);
+                Config configSBS = new Config();
+                configSBS.SetUp(rules);
+                ServerManager.SetUp(configSBS, true);
+                break;
+            case "vent-sbs":
+                ServerManager.SwitchSBServerState();
+                break;
+            case "request-file":
+                await ServerManager.ProcessFile(false, ReadUserRes(1, ["File name: "])[0]);
+                break;
+            case "upload-file":
+                await ServerManager.ProcessFile(true, ReadUserRes(1, ["File path: "])[0]);
                 break;
         }
     }
@@ -132,7 +147,7 @@ public static class ServerManager
         return IPAddress.Parse(Console.ReadLine());
     }
 
-    public static void SetUp(Config config)
+    public static void SetUp(Config config, bool standbyServer)
     {
         tcpSocket = null;
         udpSocket = null;
@@ -147,7 +162,11 @@ public static class ServerManager
         IPEndPoint[] serverEPS = EndPoints(config.serverUDPPort, config.serverTCPPort, IPAddress.Parse(config.serverIP));
         DriveTransmition.SetEP(serverEPS[0], serverEPS[1]);
         
-        DriveTransmition.SetInfo(config.key2Server, config.key2Client, config.bandwidthClient, config.bandwidthServer);
+        if(standbyServer)
+            DriveTransmition.SetInfoStandbyServer(config.key2Client, config.bandwidthClient, config.allowDownload, config.allowUpload, config.repository);
+        else 
+            DriveTransmition.SetInfo(config.key2Server, config.key2Client, config.bandwidthClient, config.bandwidthServer);
+
     } 
 
     public static async Task SendTo(string filePath)
@@ -170,17 +189,24 @@ public static class ServerManager
         Console.Write("\nFinished receiving and constructing file, command 'recreate' to rebuild a file");
     }
 
-    public static async Task Connect(bool client)
+    public static async Task Connect(bool client, bool toSBServer)
     {
+        
         if (client)
         {
             Console.Write("\nConnecting you to dest server");
-            await DriveTransmition.ClientConnect();
-            Console.Write("\nFinished connecting, ready to send and recieve files");
+            if (toSBServer)
+                await DriveTransmition.QueryServer(true);
+            else
+                await DriveTransmition.ClientConnect();
+            Console.Write("\nFinished connection sequence");
         } else
         {
             Console.Write("\nAwaiting connection from client");
-            await DriveTransmition.ServerConnect();
+            if(toSBServer)
+                DriveTransmition.ServerLoop();
+            else
+                await DriveTransmition.ServerConnect();
             Console.Write("\nConnected to client, ready to send or recieve files");
         }
     }
@@ -207,6 +233,19 @@ public static class ServerManager
             Console.Write("\n" + info);
         }
     }
+
+    public static void SwitchSBServerState()
+    {
+        DriveTransmition.running = !DriveTransmition.running;
+    }
+
+    public static async Task ProcessFile(bool request, string fileReq = null)
+    {
+        if (request)
+            await DriveTransmition.QueryServer(true, fileReq);
+        else
+            await DriveTransmition.QueryServer(false, fileReq);
+    }
 }
 
 
@@ -215,12 +254,18 @@ public class Config
     public int clientUDPPort;
     public int clientTCPPort;
     public int bandwidthClient;
-    public int serverUDPPort;
-    public int serverTCPPort;
+    public string key2Client;
+    //Client only
+    public string key2Server;
     public string serverIP;
     public int bandwidthServer;
-    public string key2Server;
-    public string key2Client;
+    public int serverUDPPort;
+    public int serverTCPPort;
+    //Server only
+    public string repository;
+    public bool lockTo;
+    public bool allowDownload;
+    public bool allowUpload;
     public void SetUp(string[] rules)
     {
         int.TryParse(rules[0], out clientUDPPort);
@@ -233,6 +278,19 @@ public class Config
             int.TryParse(rules[6], out bandwidthServer);
         else 
             bandwidthServer = 0;
+        key2Client = rules[7] != "NA" ? rules[7] : null;
+        key2Server = rules[8] != "NA" ? rules[8] : null;
+    }
+
+    public void SetUpStandby(string[] rules)
+    {
+        int.TryParse(rules[0], out clientUDPPort);
+        int.TryParse(rules[1], out clientTCPPort);
+        int.TryParse(rules[2], out bandwidthClient);
+        repository = rules[3];
+        lockTo = rules[4].ToLower() == "y";
+        allowDownload = rules[5] == "yes";
+        allowUpload = rules[6] == "yes";
         key2Client = rules[7] != "NA" ? rules[7] : null;
         key2Server = rules[8] != "NA" ? rules[8] : null;
     }

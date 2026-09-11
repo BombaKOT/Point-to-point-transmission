@@ -4,7 +4,12 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
-
+/*
+    TODO
+    Finish server loop
+    Add udp connect
+    create a code system to verify contents
+*/
 public static class DriveTransmition
 {
     private static Socket connectionTCPSocket;
@@ -20,6 +25,13 @@ public static class DriveTransmition
     private static string lastName;
     private static string lastExtension;
     private static bool server;
+    public static bool running;
+    //Determines if the server supports downloading files
+    private static bool download;
+    //Determines if the server supports uploading files
+    private static bool upload;
+    //Where the server will upload and download files from/to
+    private static string repo;
 
     //CONFIG
     public static void SetSockets(Socket tcpSocketNew, Socket udpSocketNew)
@@ -40,6 +52,15 @@ public static class DriveTransmition
         selfPasskey = key;
         bandwidth = transBandwidth;
         bandwidthServer = serverBandwidth;
+    }
+
+    public static void SetInfoStandbyServer(string key, int transBandwidth, bool aDownload, bool aUpload, string repository)
+    {
+        selfPasskey = key;
+        bandwidth = transBandwidth;
+        download = aDownload;
+        upload = aUpload;
+        repo = repository;
     }
 
     private static async Task<string> RecieveMessageUDP(int width)
@@ -70,6 +91,12 @@ public static class DriveTransmition
         int whole = (length - leftOver) / bandwidth;
 
         byte[] tempArray = new byte[bandwidth];
+
+        if (!connectionTCPSocket.Poll(200, SelectMode.SelectWrite))
+        {
+            Console.Write("\nServer device is not ready to recieve file\n");
+            return;
+        }
 
         for(int i = 0; i < whole; i++)
         {
@@ -131,10 +158,14 @@ public static class DriveTransmition
 
     public async static Task Disconnect()
     {
-        if(!(connectionTCPSocket.Connected || connectionTCPSocket.Poll(100, SelectMode.SelectWrite))) return;
+        if(!(connectionTCPSocket.Connected || connectionTCPSocket.Poll(100, SelectMode.SelectRead))) return;
         
+        await socketUDP.DisconnectAsync(true);
         if (server)
+        {
+            await connectionTCPSocket.DisconnectAsync(false);
             connectionTCPSocket.Close();
+        }
          else
             await connectionTCPSocket.DisconnectAsync(true);
     }
@@ -152,6 +183,7 @@ public static class DriveTransmition
         Console.Write($"\nAttemping to establish connection to {tcpEP.Address} on port {tcpEP.Port}");
         
         await socketTCP.ConnectAsync(tcpEP);
+        await socketUDP.ConnectAsync(udpEP);
         
         connectionTCPSocket = socketTCP;
     }
@@ -177,6 +209,7 @@ public static class DriveTransmition
         socketTCP.Listen();
 
         connectionTCPSocket = await socketTCP.AcceptAsync();
+        await socketUDP.ConnectAsync(udpEP);
     }
 
     //OTHER
@@ -225,5 +258,106 @@ public static class DriveTransmition
         }
 
         return info.ToArray();
+    }
+
+    //SERVER
+    public static async Task SetLoopStatus(bool active)
+    {
+        running = active;
+    }
+
+    public static async Task ServerLoop()
+    {
+        Console.Write("\n\nSERVER LOOP BEGUN\n\n");
+        
+        string query;
+
+        while (running)
+        {
+            query = await RecieveMessageUDP(bandwidth);
+
+            switch (query)
+            {
+                case "Upload":
+                    if (!upload)
+                        await SendStatus(CODES.INVALID, "SERVER DOES NOT SUPPORT UPLOAD");
+                    else
+                    {
+                        await SendStatus(CODES.OK);
+                        await RecieveFile();
+                    }
+                    continue;
+                case "Download":
+                    if (!download)
+                        await SendStatus(CODES.INVALID, "SERVER DOES NOT SUPPORT DOWNLOAD");
+                    else
+                    {
+                        string fileQ = query.Substring(query.IndexOf(":"));
+                        fileQ = Path.Combine(repo, fileQ);
+                        if(File.Exists(fileQ))
+                        {
+                            await SendStatus(CODES.OK);
+                            await SendFile(fileQ);
+                        } else 
+                            await SendStatus(CODES.ERROR, $"SERVER DID NOT FIND FILE: {fileQ}");
+                    }
+                    continue;
+                case "Connect":
+                    await SendStatus(CODES.OK);
+                    await ServerConnect();
+                    continue;
+                case "Disconnect":
+                    await SendStatus(CODES.OK);
+                    await Disconnect();
+                    continue;
+            }
+
+            await SendStatus(CODES.INVALID, "SERVER DOES NOT RECOGNISE THE REQUEST");
+        }
+    }
+
+    public static async Task QueryServer(bool upload, string file = null)
+    {
+        // CONNECT/DISCONNECT
+        if(file == null)
+        {
+            await SendMessageUDP(upload ? "Connect" : "Disconnect");
+            if(await GetStatus()) 
+                if (upload)
+                    await ClientConnect();
+                else
+                    await Disconnect();
+            return;
+        }
+
+        // UPLOAD/DOWNLOAD
+        await SendMessageUDP(upload ? "Upload" : $"Download:{file}");
+        bool goo = GetStatus().Result;
+        if (goo)
+        {
+            if (upload)
+                await SendFile(file);
+            else 
+                await RecieveFile();
+        } else
+            Console.Write("\nOpperation terminated\n");
+    }
+
+    private static async Task SendStatus(CODES code, string extra = null)
+    {
+        await SendMessageUDP($"{code.ToString()}:{extra}");
+    }
+
+    private static async Task<bool> GetStatus()
+    {
+        string code = await RecieveMessageUDP(bandwidth);
+        Console.Write(code.Substring(code.IndexOf(":")));
+        return code == "OK";
+    }
+
+    private enum CODES {
+        OK,
+        INVALID,
+        ERROR
     }
 }
