@@ -261,15 +261,11 @@ public static class DriveTransmition
     }
 
     //SERVER
-    public static async Task SetLoopStatus(bool active)
-    {
-        running = active;
-    }
 
     public static async Task ServerLoop()
     {
         Console.Write("\n\nSERVER LOOP BEGUN\n\n");
-        
+
         string query;
 
         while (running)

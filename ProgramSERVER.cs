@@ -19,6 +19,14 @@ public static class ConsoleManager {
     "Bandwidth (server) [NA for non-applicable]", 
     "Greeting (to client) [NA for non-applicable]",
     "Greeting (to server) [NA for non-applicable]"];
+
+    private static readonly string[] configStringsStandby = ["Open UDP Port (self)", 
+    "Open TCP Port (self)", 
+    "Bandwidth (self)", 
+    "Repository path from which files will be taken/added to", 
+    "Allow clients to request and download contents from this server's repository [Y/N]", 
+    "Allow clients to upload files to this server's repository [Y/N]", 
+    "Password for this server [NA for non-applicable]"];
     
     public static async Task Main()
     {
@@ -84,9 +92,9 @@ public static class ConsoleManager {
                 Console.Clear();
                 break;
             case "config-standby-server":
-                rules = ReadUserRes(9, configStrings);
+                rules = ReadUserRes(6, configStringsStandby);
                 Config configSBS = new Config();
-                configSBS.SetUp(rules);
+                configSBS.SetUpStandby(rules);
                 ServerManager.SetUp(configSBS, true);
                 break;
             case "vent-sbs":
@@ -263,7 +271,6 @@ public class Config
     public int serverTCPPort;
     //Server only
     public string repository;
-    public bool lockTo;
     public bool allowDownload;
     public bool allowUpload;
     public void SetUp(string[] rules)
@@ -274,12 +281,12 @@ public class Config
         int.TryParse(rules[3], out serverUDPPort);
         int.TryParse(rules[4], out serverTCPPort);
         serverIP = rules[5];
-        if(rules[6] != "NA")
+        if(rules[6].ToLower() != "na")
             int.TryParse(rules[6], out bandwidthServer);
         else 
             bandwidthServer = 0;
-        key2Client = rules[7] != "NA" ? rules[7] : null;
-        key2Server = rules[8] != "NA" ? rules[8] : null;
+        key2Client = rules[7].ToLower() != "na" ? rules[7] : null;
+        key2Server = rules[8].ToLower() != "na" ? rules[8] : null;
     }
 
     public void SetUpStandby(string[] rules)
@@ -288,10 +295,8 @@ public class Config
         int.TryParse(rules[1], out clientTCPPort);
         int.TryParse(rules[2], out bandwidthClient);
         repository = rules[3];
-        lockTo = rules[4].ToLower() == "y";
-        allowDownload = rules[5] == "yes";
-        allowUpload = rules[6] == "yes";
-        key2Client = rules[7] != "NA" ? rules[7] : null;
-        key2Server = rules[8] != "NA" ? rules[8] : null;
+        allowDownload = rules[4].ToLower() == "y";
+        allowUpload = rules[5].ToLower() == "y";
+        key2Client = rules[6].ToLower() != "na" ? rules[6] : null;
     }
 }
