@@ -92,7 +92,7 @@ public static class ConsoleManager {
                 Console.Clear();
                 break;
             case "config-standby-server":
-                rules = ReadUserRes(6, configStringsStandby);
+                rules = ReadUserRes(7, configStringsStandby);
                 Config configSBS = new Config();
                 configSBS.SetUpStandby(rules);
                 ServerManager.SetUp(configSBS, true);
@@ -106,6 +106,12 @@ public static class ConsoleManager {
             case "upload-file":
                 await ServerManager.ProcessFile(true, ReadUserRes(1, ["File path: "])[0]);
                 break;
+            case "start-server":
+                await ServerManager.Connect(false, false);
+                break;
+            case "end-server":
+                DriveTransmition.active = false;
+                break;    
         }
     }
 }
@@ -159,6 +165,7 @@ public static class ServerManager
     {
         tcpSocket = null;
         udpSocket = null;
+
         
         Initialize(config.clientUDPPort, config.clientTCPPort);
         while(true)
@@ -167,13 +174,15 @@ public static class ServerManager
 
         DriveTransmition.SetSockets(tcpSocket, udpSocket);
         
-        IPEndPoint[] serverEPS = EndPoints(config.serverUDPPort, config.serverTCPPort, IPAddress.Parse(config.serverIP));
-        DriveTransmition.SetEP(serverEPS[0], serverEPS[1]);
         
         if(standbyServer)
             DriveTransmition.SetInfoStandbyServer(config.key2Client, config.bandwidthClient, config.allowDownload, config.allowUpload, config.repository);
-        else 
+        else
+        {
+            IPEndPoint[] serverEPS = EndPoints(config.serverUDPPort, config.serverTCPPort, IPAddress.Parse(config.serverIP));
+            DriveTransmition.SetEP(serverEPS[0], serverEPS[1]);
             DriveTransmition.SetInfo(config.key2Server, config.key2Client, config.bandwidthClient, config.bandwidthServer);
+        }
 
     } 
 
@@ -211,11 +220,18 @@ public static class ServerManager
         } else
         {
             Console.Write("\nAwaiting connection from client");
-            if(toSBServer)
+            if (toSBServer)
+            {
+                DriveTransmition.active = true; 
+                DriveTransmition.running = true;
                 DriveTransmition.ServerLoop();
+                Console.Write("\nServer loop started");
+            }
             else
+            {
                 await DriveTransmition.ServerConnect();
-            Console.Write("\nConnected to client, ready to send or recieve files");
+                Console.Write("\nConnected to client, ready to send or recieve files");
+            }
         }
     }
 
@@ -244,7 +260,9 @@ public static class ServerManager
 
     public static void SwitchSBServerState()
     {
+        Console.Write($"\nActive status: {DriveTransmition.active} \nSwitching from RUNNING: {DriveTransmition.running} to RUNNING: {!DriveTransmition.running}");
         DriveTransmition.running = !DriveTransmition.running;
+        Console.Write($"\nSwitched successfully");
     }
 
     public static async Task ProcessFile(bool request, string fileReq = null)

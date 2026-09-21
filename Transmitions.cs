@@ -25,6 +25,9 @@ public static class DriveTransmition
     private static string lastName;
     private static string lastExtension;
     private static bool server;
+    //Determines if the server is still passively running or not
+    public static bool active;
+    //Determines if the server is taking requests
     public static bool running;
     //Determines if the server supports downloading files
     private static bool download;
@@ -268,48 +271,72 @@ public static class DriveTransmition
 
         string query;
 
-        while (running)
+        AddLog("Server Loop Start", "Log.txt");
+
+        while (active)
         {
-            query = await RecieveMessageUDP(bandwidth);
-
-            switch (query)
+            while (running)
             {
-                case "Upload":
-                    if (!upload)
-                        await SendStatus(CODES.INVALID, "SERVER DOES NOT SUPPORT UPLOAD");
-                    else
-                    {
-                        await SendStatus(CODES.OK);
-                        await RecieveFile();
-                    }
-                    continue;
-                case "Download":
-                    if (!download)
-                        await SendStatus(CODES.INVALID, "SERVER DOES NOT SUPPORT DOWNLOAD");
-                    else
-                    {
-                        string fileQ = query.Substring(query.IndexOf(":"));
-                        fileQ = Path.Combine(repo, fileQ);
-                        if(File.Exists(fileQ))
-                        {
-                            await SendStatus(CODES.OK);
-                            await SendFile(fileQ);
-                        } else 
-                            await SendStatus(CODES.ERROR, $"SERVER DID NOT FIND FILE: {fileQ}");
-                    }
-                    continue;
-                case "Connect":
-                    await SendStatus(CODES.OK);
-                    await ServerConnect();
-                    continue;
-                case "Disconnect":
-                    await SendStatus(CODES.OK);
-                    await Disconnect();
-                    continue;
-            }
+                query = (await RecieveMessageUDP(bandwidth)).ToLower();
+                AddLog($"Recieved query: {query}", "Log.txt");
 
-            await SendStatus(CODES.INVALID, "SERVER DOES NOT RECOGNISE THE REQUEST");
+                switch (query)
+                {
+                    case "upload":
+                        if (!upload)
+                        {
+                            AddLog("Client turned away from uploading to server", "Log.txt");
+                            await SendStatus(CODES.INVALID, "SERVER DOES NOT SUPPORT UPLOAD");
+                        }
+                        else
+                        {
+                            AddLog("Recieving file by client", "Log.txt");
+                            await SendStatus(CODES.OK);
+                            await RecieveFile();
+                        }
+                        continue;
+                    case "download":
+                        if (!download)
+                        {
+                            AddLog("Client turned away from downloading to server", "Log.txt");
+                            await SendStatus(CODES.INVALID, "SERVER DOES NOT SUPPORT DOWNLOAD");
+                        }
+                        else
+                        {
+                            string fileQ = await RecieveMessageUDP(bandwidth);
+                            fileQ = Path.Combine(repo, fileQ);
+                            AddLog($"Recieved file request: {fileQ} | matching to: {fileQ}", "Log.txt");
+
+                            if(File.Exists(fileQ))
+                            {
+                                await SendStatus(CODES.OK);
+                                AddLog("File found, sending to client", "Log.txt");
+                                await SendFile(fileQ);
+                            }
+                            else
+                            {
+                                AddLog("File not found", "Log.txt");
+                                await SendStatus(CODES.ERROR, $"SERVER DID NOT FIND FILE: {fileQ}");
+                            }
+                        }
+                        continue;
+                    case "connect":
+                        await SendStatus(CODES.OK);
+                        await ServerConnect();
+                        continue;
+                    case "disconnect":
+                        await SendStatus(CODES.OK);
+                        await Disconnect();
+                        continue;
+                }
+
+                await SendStatus(CODES.INVALID, "SERVER DOES NOT RECOGNISE THE REQUEST");
+            }
+            Thread.Sleep(1000);
         }
+
+        await Disconnect();
+
     }
 
     public static async Task QueryServer(bool upload, string file = null)
@@ -327,14 +354,17 @@ public static class DriveTransmition
         }
 
         // UPLOAD/DOWNLOAD
-        await SendMessageUDP(upload ? "Upload" : $"Download:{file}");
+        await SendMessageUDP(upload ? "Upload" : "Download");
         bool goo = GetStatus().Result;
         if (goo)
         {
             if (upload)
                 await SendFile(file);
-            else 
+            else
+            {
+                await SendMessageUDP(file);
                 await RecieveFile();
+            }
         } else
             Console.Write("\nOpperation terminated\n");
     }
