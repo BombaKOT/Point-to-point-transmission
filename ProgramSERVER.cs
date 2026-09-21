@@ -62,7 +62,10 @@ public static class ConsoleManager {
                 await ServerManager.Connect(false, false); 
                 break;
             case "connect-client": 
-                await ServerManager.Connect(true, false); 
+                await ServerManager.Connect(true, false);
+                break; 
+            case "connect-client-server": 
+                await ServerManager.Connect(true, true); 
                 break;
             case "send": 
                 await ServerManager.SendTo(ReadUserRes(1, ["Filename"])[0]);
