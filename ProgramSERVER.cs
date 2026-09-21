@@ -110,7 +110,7 @@ public static class ConsoleManager {
                 await ServerManager.ProcessFile(true, ReadUserRes(1, ["File path: "])[0]);
                 break;
             case "start-server":
-                await ServerManager.Connect(false, false);
+                await ServerManager.Connect(false, true);
                 break;
             case "end-server":
                 DriveTransmition.active = false;

@@ -70,9 +70,9 @@ public static class DriveTransmition
     {
         byte[] buffer = new byte[width];
         Memory<byte> mem = new Memory<byte>(buffer);
-        
-        var res = await socketUDP.ReceiveMessageFromAsync(mem, udpEP);
-        int length = res.ReceivedBytes;
+        Console.Write("\n\nWaiting for a message...");
+        int length = await socketUDP.ReceiveAsync(mem);
+        Console.Write("\n\nWe got a message!");
         return Encoding.ASCII.GetString(buffer, 0, length);
     }
 
@@ -275,8 +275,10 @@ public static class DriveTransmition
 
         while (active)
         {
+            AddLog("Server Loop Start - active", "Log.txt");
             while (running)
             {
+                AddLog("Server Loop Start - running", "Log.txt");
                 query = (await RecieveMessageUDP(bandwidth)).ToLower();
                 AddLog($"Recieved query: {query}", "Log.txt");
 
